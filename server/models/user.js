@@ -42,7 +42,7 @@ UserSchema.methods.toJSON=function(){
 UserSchema.methods.generateAuthToken= function(){
   var user=this;
   var access='auth';
-  var token=jwt.sign({_id: user._id.toHexString(),access},'secretz').toString();
+  var token=jwt.sign({_id: user._id.toHexString(),access},'secretz');
 
   user.tokens.push({access,token});
   return user.save().then(()=>{
@@ -50,6 +50,22 @@ UserSchema.methods.generateAuthToken= function(){
   });
 }
 
+UserSchema.statics.findByToken=function(token){
+  var User=this;
+  var decoded;
+
+  try {
+    decoded= jwt.verify(token,'secretz');
+  } catch(err){
+    return Promise.reject()
+  }
+
+  return User.findOne({
+    _id:decoded._id,
+    'tokens.token':token,
+    'tokens.access':'auth'
+  });
+}
 var User=mongoose.model('User', UserSchema)
 
 module.exports={User}
